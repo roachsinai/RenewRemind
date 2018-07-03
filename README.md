@@ -31,6 +31,15 @@ git clone https://github.com/windcode/renewremind.git
 python renewremind/renewremind.py
 ```
 
+`crontab`设置：
+
+```
+$ crontab -e # 新建或者编辑已有的cron table
+
+选择`vim`进行编辑输入：
+*/10 * * * * /root/remind/renewRemind.py # 10min检查一次
+```
+
 运行脚本会检查更新情况，如果有更新，发送提醒邮件给你。
 
 初次运行会发送当前更新情况。
