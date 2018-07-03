@@ -1,10 +1,14 @@
 #coding=utf8
+import pickle
 import re
 import os,sys
-import urllib,urllib2
+import urllib.request, urllib.parse, urllib.error,urllib.request,urllib.error,urllib.parse
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
+# import gi
+# gi.require_version('Notify', '0.7')
+# from gi.repository import Notify
 
 timeout = 30                             # 超时时间
 charset = 'utf-8'		# 请求页面的编码格式
@@ -19,8 +23,8 @@ my_password = ''                   # 邮箱授权码
 
 def get_html(url,timeout=None):
     headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'  }
-    request = urllib2.Request(url,headers=headers)
-    response = urllib2.urlopen(request,timeout=timeout)
+    request = urllib.request.Request(url,headers=headers)
+    response = urllib.request.urlopen(request,timeout=timeout)
     return response.read()
 
 def send_email(sub,cont):
@@ -45,44 +49,36 @@ def send_email(sub,cont):
 
 def Init():
     global renew_dict,my_email,my_password
-    print '正在加载邮箱地址和授权码……'
+    print('正在加载邮箱地址和授权码……')
     try:
         fp = open(conf_file,'r')
-    except Exception,e:
-        print '加载失败，conf.ini文件不存在'
-        raise Exception,e
+    except Exception as e:
+        print('加载失败，conf.ini文件不存在')
+        raise Exception(e)
     lines = fp.readlines()
     my_email = lines[1].strip()     # 加载邮箱地址
     my_password = lines[3].strip()  # 加载邮箱授权码
     fp.close()
 
-    print '正在加载更新记录……'
+    print('正在加载更新记录……')
     # 提取更新情况记录
     try:
-        fp = open(record_file,'r')
+        fp = open(record_file,'rb')
     except:
-        open(record_file,'w')
-        fp = open(record_file,'r')
-    for line in fp:
-        items = line.split(':#:')
-        #print items
-        key = items[0].strip()
-        value = items[1].strip()
-        #idx = line.find(':#:')
-        #key = line[:idx].strip()
-        #value = line[idx:].strip()
-        renew_dict[key] = value
+        fp.close()
+        return
 
+    renew_dict = pickle.load(fp)
     fp.close()
 
 
 def RenewCheck(key,src_url,des_url,pattern_str,charset):
     # 提示信息
-    print '正在检查【%s】的更新状态……'%(key)
+    print('正在检查【%s】的更新状态……'%(key))
 
     # 检查更新
     global subject,content,isRenew,renew_dict
-    host = 'http://'+src_url.split('//')[1].split('/')[0]   # 检查网站的host地址
+    # host = 'http://'+src_url.split('//')[1].split('/')[0]   # 检查网站的host地址
     html = get_html(src_url,timeout).decode(charset)        # 获得页面源码
 
     # 解析源码
@@ -90,34 +86,34 @@ def RenewCheck(key,src_url,des_url,pattern_str,charset):
     items = re.findall(pattern,html)
 
     # 清洗数据
-    items = map(lambda x:x.strip(),items)
+    items = [x.strip() for x in items]
 
     # 输出解析结果
     title = ' '.join(items)
 
     # 判断是否有更新
     cur = title.encode('utf8')
-    if renew_dict.has_key(key): # 判断之前有无记录
+    if key in renew_dict: # 判断之前有无记录
         last = renew_dict[key]
     else:
         last = None
+
     if cur != last or last==None:
         # 如果有更新，发送邮件提示
         isRenew = True
 
         # 更新记录
         renew_dict[key] = cur
-        fp = open(record_file,'w')
-        for item,value in renew_dict.items():
-            fp.write('%s:#:%s\n'%(item,value))
+        fp = open(record_file,'wb')
+        pickle.dump(renew_dict, fp)
         fp.close()
 
-        print '【%s】有更新，发送邮件……'%(key)
+        print('【%s】有更新，发送邮件……'%(key))
         subject += '%s '%(key)
-        content += '【%s】已经更新到【%s】，戳这里看详情：%s<br/>'%(key,cur,des_url)
+        content += '【%s】已经更新到【%s】，戳这里看详情：%s<br/>'%(key,cur.decode(),des_url)
     else:
         # 没有更新
-        print '【%s】没有更新'%(key)
+        print('【%s】没有更新'%(key))
 
 
 def main():
@@ -137,53 +133,46 @@ def main():
     # pattern_str   - 匹配正则表达式
     # charset       - 检查对象网站的编码
     renewObjList = [
-        ('扳手少年',\
-            'http://ac.qq.com/Comic/ComicInfo/id/520794',\
-            'http://ac.qq.com/ComicView/index/id/520794/cid/176',\
-            r'<a class="works-ft-new" href=".*?">(.*?)</a><span.*?>.*?</span>',\
-            'utf8'
-        ),  # 漫画：扳手少年
-        
-        ('飞剑问道',\
-            'https://book.qidian.com/info/1010468795',\
-            'http://www.booktxt.net/6_6454',\
-            r'<a class="blue" href=".*?" data-eid="qd_G19" data-cid=".*?" title=".*?" target="_blank">(.*?)</a><i>.*?</i><em class="time">.*?</em>',\
+        # ('扳手少年',\
+        #     'http://ac.qq.com/Comic/ComicInfo/id/520794',\
+        #     'http://ac.qq.com/ComicView/index/id/520794/cid/176',\
+        #     r'<a class="works-ft-new" href=".*?">(.*?)</a><span.*?>.*?</span>',\
+        #     'utf8'
+        # ),  # 漫画：扳手少年
+        # ('飞剑问道',\
+        #     'https://book.qidian.com/info/1010468795',\
+        #     'http://www.booktxt.net/6_6454',\
+        #     r'<a class="blue" href=".*?" data-eid="qd_G19" data-cid=".*?" title=".*?" target="_blank">(.*?)</a><i>.*?</i><em class="time">.*?</em>',\
+        #     'utf8'\
+        # ),   # 小说：飞剑问道
+        ('剑来',\
+            'http://book.zongheng.com/book/672340.html',\
+            'http://www.booktxt.net/5_5871/',\
+            r'<a class="chap" href=".*?">(.*?)<p>.*?</p></a>',\
             'utf8'\
-        ),   # 小说：飞剑问道
-        
-        ('五行天',\
-            'https://book.qidian.com/info/3638453',\
-            'http://www.booktxt.net/1_1142/',\
-            r'<a class="blue" href=".*?" data-eid="qd_G19" data-cid=".*?" title=".*?" target="_blank">(.*?)</a><i>.*?</i><em class="time">.*?</em>',\
+        ),   # 小说：剑来
+        ('万域之王',\
+            'http://book.zongheng.com/book/568097.html',\
+            'http://www.booktxt.net/2_2591/',\
+            r'<a class="chap" href=".*?">(.*?)<p>.*?</p></a>',\
             'utf8'\
-        ),   # 小说：五行天
-
-        ('凡人修仙传之仙界篇',\
-               'https://book.qidian.com/info/1010734492',\
-               'http://www.booktxt.net/4_4891/',\
-                r'<a class="blue" href=".*?" data-eid="qd_G19" data-cid=".*?" title=".*?" target="_blank">(.*?)</a><i>.*?</i><em class="time">.*?</em>',\
-                'utf8'\
-        ),   # 小说：凡人修仙传之仙界篇
-
-        ('伊塔之柱',\
-               'https://book.qidian.com/info/1011139133',\
-               'http://www.booktxt.net/5_5014/',\
-                r'<a class="blue" href=".*?" data-eid="qd_G19" data-cid=".*?" title=".*?" target="_blank">(.*?)</a><i>.*?</i><em class="time">.*?</em>',\
-                'utf8'\
-        )   # 小说：伊塔之柱
-
+        )   # 小说：万域之王
     ]
 
     for renewObj in renewObjList:
         try:
             RenewCheck(*renewObj)
-        except Exception,e:
-            print '[ERROR]:%s'%e
+        except Exception as e:
+            print('[ERROR]:%s'%e)
             continue
 
     if isRenew:
         send_email(subject+'有更新！',content)
-
+        # Notify.init ("Chasing")
+        # result = Notify.Notification.new (subject+'有更新！',
+        #                        content,
+        #                        "dialog-information")
+        # result.show()
 
 if __name__ == '__main__':
     main()
