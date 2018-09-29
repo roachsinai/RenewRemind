@@ -1,4 +1,6 @@
+#!/usr/bin/python
 #coding=utf8
+
 import pickle
 import re
 import os,sys
@@ -148,15 +150,21 @@ def main():
         ('剑来',\
             'http://book.zongheng.com/book/672340.html',\
             'http://www.booktxt.net/5_5871/',\
-            r'<a class="chap" href=".*?">(.*?)<p>.*?</p></a>',\
+            r'<div class="tit"><a href=".*?">(.*?)</a><em></em></div>',\
             'utf8'\
         ),   # 小说：剑来
         ('万域之王',\
             'http://book.zongheng.com/book/568097.html',\
             'http://www.booktxt.net/2_2591/',\
-            r'<a class="chap" href=".*?">(.*?)<p>.*?</p></a>',\
+            r'<div class="tit"><a href=".*?">(.*?)</a><em></em></div>',\
             'utf8'\
-        )   # 小说：万域之王
+        ),   # 小说：万域之王
+        ('天行',\
+            'http://www.17k.com/book/2722533.html',\
+            'https://www.piaotian.com/html/9/9227/',\
+            r'最新vip章节：<a\s*href=".*?"\s*target="_blank">(.*?)</a>',\
+            'utf8'\
+        )   # 小说：天行
     ]
 
     for renewObj in renewObjList:
