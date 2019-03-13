@@ -16,7 +16,6 @@ timeout = 30                             # 超时时间
 charset = 'utf-8'		# 请求页面的编码格式
 subject = '【更新提示】'	# email 中的主题
 content = ''			# email 中的内容
-isRenew = False			# 是否有更新
 record_file = os.path.join(sys.path[0],'record.dat')      # 记录文件
 conf_file = os.path.join(sys.path[0],'conf.ini')                # 配置文件
 renew_dict = {}                 # 更新记录
@@ -24,7 +23,7 @@ my_email = ''                      # 邮箱地址
 my_password = ''                   # 邮箱授权码
 
 def get_html(url,timeout=None):
-    headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'  }
+    headers = {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) KHTML/5.55.0 (like Gecko) Konqueror/5 KIO/5.55'}
     request = urllib.request.Request(url,headers=headers)
     response = urllib.request.urlopen(request,timeout=timeout)
     return response.read()
@@ -80,18 +79,20 @@ def RenewCheck(key,src_url,des_url,pattern_str,charset):
 
     # 检查更新
     global subject,content,isRenew,renew_dict
+    isRenew = False
     # host = 'http://'+src_url.split('//')[1].split('/')[0]   # 检查网站的host地址
     html = get_html(src_url,timeout).decode(charset)        # 获得页面源码
 
     # 解析源码
     pattern = re.compile(pattern_str,re.S)
     items = re.findall(pattern,html)
+    if items:
+        items = items[0]
+    else:
+        return
 
     # 清洗数据
-    items = [x.strip() for x in items]
-
-    # 输出解析结果
-    title = ' '.join(items)
+    title = items.strip()
 
     # 判断是否有更新
     cur = title.encode('utf8')
@@ -120,7 +121,6 @@ def RenewCheck(key,src_url,des_url,pattern_str,charset):
 
 def main():
     global subject,content,isRenew
-    isRenew = False
 
     # 提取更新情况记录
     Init()
@@ -141,30 +141,24 @@ def main():
         #     r'<a class="works-ft-new" href=".*?">(.*?)</a><span.*?>.*?</span>',\
         #     'utf8'
         # ),  # 漫画：扳手少年
-        # ('飞剑问道',\
-        #     'https://book.qidian.com/info/1010468795',\
-        #     'http://www.booktxt.net/6_6454',\
-        #     r'<a class="blue" href=".*?" data-eid="qd_G19" data-cid=".*?" title=".*?" target="_blank">(.*?)</a><i>.*?</i><em class="time">.*?</em>',\
+        # ('剑来',\
+        #     'http://book.zongheng.com/book/672340.html',\
+        #     'http://www.booktxt.net/5_5871/',\
+        #     r'<div class="tit"><a href=".*?">(.*?)</a><em></em></div>',\
         #     'utf8'\
-        # ),   # 小说：飞剑问道
-        ('剑来',\
-            'http://book.zongheng.com/book/672340.html',\
-            'http://www.booktxt.net/5_5871/',\
-            r'<div class="tit"><a href=".*?">(.*?)</a><em></em></div>',\
+        # ),   # 小说：剑来
+        # ('天行',\
+        #     'http://www.17k.com/book/2722533.html',\
+        #     'https://www.piaotian.com/html/9/9227/',\
+        #     r'最新vip章节：<a\s*href=".*?"\s*target="_blank">(.*?)</a>',\
+        #     'utf8'\
+        # )   # 小说：天行
+        ('渤海小吏',\
+            'https://www.zhihu.com/people/dai-zong-66/posts',\
+            'https://www.zhihu.com/people/dai-zong-66/posts',\
+            r'<h2 class="ContentItem-title"><a href=".*?" target="_blank" rel="noopener noreferrer" data-za-detail-view-element_name="Title">(.*?)</a></h2>',\
             'utf8'\
-        ),   # 小说：剑来
-        ('万域之王',\
-            'http://book.zongheng.com/book/568097.html',\
-            'http://www.booktxt.net/2_2591/',\
-            r'<div class="tit"><a href=".*?">(.*?)</a><em></em></div>',\
-            'utf8'\
-        ),   # 小说：万域之王
-        ('天行',\
-            'http://www.17k.com/book/2722533.html',\
-            'https://www.piaotian.com/html/9/9227/',\
-            r'最新vip章节：<a\s*href=".*?"\s*target="_blank">(.*?)</a>',\
-            'utf8'\
-        )   # 小说：天行
+        )   # 知乎：2300年封建脉络的百场转折之战
     ]
 
     for renewObj in renewObjList:
