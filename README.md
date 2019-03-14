@@ -1,7 +1,7 @@
-## RenewRemind - 一个 小说/番剧/漫画 更新提醒脚本
+## RenewRemind - 一个 小说/番剧/漫画/知乎文章 更新提醒脚本
 
 ## 简介
-关注的 **小说/番剧/漫画** 如果有更新，立刻给你发送提醒邮件。
+关注的 **小说/番剧/漫画/知乎文章** 如果有更新，立刻给你发送提醒邮件。
 
 脚本中内置了一部漫画和两部小说的更新检查。
 
@@ -16,7 +16,7 @@
 ### step 1. 将项目clone到本地
 
 ```
-git clone https://github.com/windcode/renewremind.git
+git clone https://github.com/roachsinai/RenewRemind.git
 ```
 
 ### step 2. 设置email用户名和授权码
